@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>片荒指南</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--ink:#1c1c1e;--sub:#8e8e93;--line:#e9e9ee;--card:#fff;--bg:#f7f7f9;--accent:#2f6fed}
+body{font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.65;-webkit-font-smoothing:antialiased}
+header{background:var(--ink);color:#fff;padding:34px 20px 26px;text-align:center}
+header h1{font-size:24px;font-weight:700;letter-spacing:2px}
+header p{font-size:13px;color:#a7a7b3;margin-top:8px}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+.tabs{display:flex;gap:8px;margin:18px 0 4px}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 18px;font-size:14px;color:var(--sub);cursor:pointer}
+.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.search{margin:12px 0 6px}
+.search input{width:100%;padding:12px 16px;border:1px solid var(--line);border-radius:10px;font-size:15px;outline:none;background:#fff}
+.search input:focus{border-color:var(--accent)}
+.list{padding:10px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
+.card .meta{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.card .tag{font-size:12px;color:var(--accent);background:#eaf0fe;border-radius:4px;padding:2px 8px}
+.card .year{font-size:12px;color:var(--sub)}
+.card h2{font-size:17px;font-weight:600;margin-bottom:8px}
+.card .desc{font-size:14px;color:#555;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card .links{border-top:1px dashed var(--line);padding-top:12px}
+.link-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.link-row:last-child{margin-bottom:0}
+.drive{flex-shrink:0;font-size:12px;font-weight:600;color:#fff;background:#7a7a85;border-radius:4px;padding:4px 10px}
+.drive.xunlei{background:#0f6bff}
+.drive.kuake{background:#6c3df5}
+.drive.baidu{background:#306eff}
+.link-text{flex:1;font-size:13px;background:var(--bg);border-radius:6px;padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#666}
+.copy{flex-shrink:0;background:var(--ink);color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:13px;cursor:pointer}
+.copy:active{opacity:.75}
+.empty{text-align:center;color:var(--sub);padding:48px 0;font-size:14px}
+footer{text-align:center;color:#c0c0c8;font-size:12px;padding:28px 16px 40px;line-height:2}
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(20,20,22,.85);color:#fff;padding:10px 22px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+<h1>片荒指南</h1>
+<p>不知道看什么？来这找。复制链接，到对应网盘 App 打开即看</p>
+</header>
+<div class="wrap">
+<div class="tabs" id="tabs">
+<button class="on" onclick="setType('')">全部</button>
+<button onclick="setType('剧集')">剧集</button>
+<button onclick="setType('电影')">电影</button>
+</div>
+<div class="search"><input id="q" type="text" placeholder="搜索片名…" oninput="render()"></div>
+<div class="list" id="list"></div>
+</div>
+<footer>资源来自网友分享，仅供学习交流<br>链接失效请反馈，会尽快补</footer>
+<div class="toast" id="toast">已复制，去网盘 App 粘贴打开</div>
+
+<script>
+// ===== 资源数据 =====
+// type: 剧集 / 电影；links: 数组，每项 drive=网盘名，url=分享链接
+const DATA = [
+{
+title:"人生切割术 第一季",
+type:"剧集", year:"2022",
+desc:"故事发生在一家名为卢蒙的超级大公司内，一种名为记忆分割术的全新技术正在公司内部进行实验。接受手术的员工会形成公司人格和日常人格：踏进公司大门，日常人格沉睡、公司人格主导；离开公司，日常人格接管身体，不记得公司里发生的事。马克（亚当·斯科特 饰）、迪伦（扎克·切利 饰）和欧文（约翰·特托罗 饰）都接受了分离手术，这天部门迎来新同事海莉（布丽特·洛薇尔 饰），她的反叛气质打破了部门长久的平静。",
+links:[
+{drive:"迅雷", url:"https://pan.xunlei.com/s/VP4acuu-460ykxv8rA9gemibA1?pwd=jv4x#"}
+]
+}
+];
+
+let curType='';
+const DRIVE_CLASS={"迅雷":"xunlei","夸克":"kuake","百度":"baidu"};
+
+function setType(t){
+curType=t;
+document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.textContent===(t||'全部')));
+render();
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;')}
+function render(){
+const q=document.getElementById('q').value.trim();
+const list=document.getElementById('list');
+const rows=DATA.filter(d=>(!curType||d.type===curType)&&(!q||d.title.includes(q)));
+if(!rows.length){list.innerHTML='<div class="empty">没找到，换个关键词或分类试试</div>';return;}
+list.innerHTML=rows.map(d=>{
+const di=DATA.indexOf(d);
+const links=d.links.map((l,li)=>{
+const dc=DRIVE_CLASS[l.drive]||'';
+return `<div class="link-row"><span class="drive ${dc}">${esc(l.drive)}</span><div class="link-text">${esc(l.url)}</div><button class="copy" onclick="copy(${di},${li})">复制</button></div>`;
+}).join('');
+return `<div class="card"><div class="meta"><span class="tag">${esc(d.type)}</span><span class="year">${esc(d.year||'')}</span></div><h2>${esc(d.title)}</h2><div class="desc">${esc(d.desc)}</div><div class="links">${links}</div></div>`;
+}).join('');
+}
+function copy(di,li){
+const t=DATA[di].links[li].url;
+const done=()=>{const el=document.getElementById('toast');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1600);};
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(()=>fallback());}
+else fallback();
+function fallback(){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);done();}
+}
+render();
+</script>
+</body>
+</html>
